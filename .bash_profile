@@ -3,26 +3,31 @@ alias gco="git checkout"
 # increase bash history
 HISTSIZE=1000
 
-COLOR_RED="\[\e[31;40m\]"
-COLOR_GREEN="\[\e[32;40m\]"
-COLOR_CYAN="\[\e[36;40m\]"
-COLOR_RESET="\[\e[0m\]"
+alias gst="git status"
+alias gco="git checkout"
+# increase bash history
+HISTSIZE=1000
 
+autoload -Uz compinit && compinit
+autoload -Uz add-zsh-hook
+autoload -Uz vcs_info
 
-function git_branch_name {
-  ref=$(git symbolic-ref HEAD 2> /dev/null) || return
-  echo " ("${ref#refs/heads/}")"
-}
+add-zsh-hook precmd vcs_info
 
-function git_branch_color {
-  if [[ $(git status 2> /dev/null | grep -c :) == 0 ]]
-    then echo "${COLOR_GREEN}"
-    else echo "${COLOR_RED}"
+zstyle ':vcs_info:*' enable git
+zstyle ':vcs_info:*' formats " %F{green}%c%u(%b)%f"
+zstyle ':vcs_info:*' actionformats " %F{green}%c%u(%b)%f %a"
+zstyle ':vcs_info:*' stagedstr "%F{red}"
+zstyle ':vcs_info:*' unstagedstr "%F{red}"
+zstyle ':vcs_info:*' check-for-changes true
+
+zstyle ':vcs_info:git*+set-message:*' hooks git-untracked
+
++vi-git-untracked() {
+  if git --no-optional-locks status --porcelain 2> /dev/null | grep -q "^??"; then
+    hook_com[staged]+="%F{red}"
   fi
 }
 
-function prompt_title {
-  PS1="\w$(git_branch_color)$(git_branch_name)${COLOR_RESET} \$ "
-}
-
-PROMPT_COMMAND=prompt_title
+setopt PROMPT_SUBST
+export PROMPT='%n:%1~$vcs_info_msg_0_ %# '
